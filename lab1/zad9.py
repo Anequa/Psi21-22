@@ -1,5 +1,4 @@
 # Przekształć poprzednie zadanie na słownik, a następnie dodaj pary zawierające wiek, adres email, rok urodzenia oraz adres.
-# nwm czy tak
 student = {
     "Adam A": {
         "wiek": 13,
