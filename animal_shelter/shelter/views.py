@@ -1,6 +1,6 @@
 # from django.http import HttpResponse
 # from django.shortcuts import render
-from authentication.models import User, Worker
+from authentication.models import Worker
 from django.views.generic import TemplateView
 
 # def first_view(request):
@@ -12,13 +12,8 @@ class HomePageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        workers = Worker.objects.all().values("username")
-        workers = [w["username"] for w in workers]
-        users = User.objects.all().values("username")
-        users = [u["username"] for u in users]
-        usernames = [user for user in users if user not in workers]
-        context["workers"] = workers
-        context["users"] = users
-        context["username"] = usernames
-        context["x"] = User.objects.filter(username__in=usernames)
+        workers = Worker.objects.all().first()
+        context["worker"] = workers
+        x = Worker.objects.all().values("contract_expiration_date")
+        print(x)
         return context
