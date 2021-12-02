@@ -1,6 +1,7 @@
 # from django.contrib.auth.models import AbstractUser
 from authentication.models import User, Worker
 from django.db import models
+import datetime as dt
 
 # from django.utils.translation import gettext_lazy as _
 
@@ -127,6 +128,12 @@ class Photo(models.Model):
         null=True,
     )
 
+<<<<<<< Updated upstream
+=======
+    def __str__(self):
+        return str(self.pk) + " | " + str(self.animal) + " | " + self.alter
+
+>>>>>>> Stashed changes
 
 class MeetingInfo(models.Model):
     create_date = models.DateTimeField(
@@ -151,12 +158,32 @@ class MeetingInfo(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+<<<<<<< Updated upstream
+=======
+    def __str__(self):
+        return (
+            str(self.create_date.date())
+            + " | "
+            + str(self.user)
+            + " | "
+            + str(self.animal)
+        )
+
+>>>>>>> Stashed changes
 
 class Reservation(MeetingInfo):
     reservation_date = models.DateTimeField(
         verbose_name="reservation date",
     )
 
+<<<<<<< Updated upstream
+=======
+    # def __str__(self):
+    #     return str(self.pk) + " | " + str(super().animal) + " | " + str(super().user) + " |  " + str(super().create_date.date()) + " | " + str(self.reservation_date.date())
+    def __str__(self):
+        st = super().__str__() 
+        return str(self.pk) + " | " + st + " | " + str(self.reservation_date.date())
+>>>>>>> Stashed changes
 
 class Adoption(MeetingInfo):
     adoption_date = models.DateTimeField(
