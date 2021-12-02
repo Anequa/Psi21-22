@@ -1,0 +1,5 @@
+.venv
+animal_shelter/*/__pycache__
+animal_shelter/*/migrations
+animal_shelter/*/*/__pycache__
+
