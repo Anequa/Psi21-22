@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "shelter.apps.ShelterConfig",
     "authentication.apps.AuthenticationConfig",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [

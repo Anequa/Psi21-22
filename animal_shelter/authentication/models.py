@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
 
 # from django.utils.translation import gettext_lazy as _
@@ -15,7 +16,14 @@ class User(AbstractUser):
             "unique": ("Osoba o takim emailu już istnieje."),
         },
     )
+    phone_number_regex = RegexValidator(
+        regex=r"^([1-9][0-9])?[1-9][0-9]{8}",
+        message=(
+            "Phone number must be entered in the format: '19012345678'. Up to 11 digits allowed."
+        ),
+    )
     phone = models.TextField(
+        validators=[phone_number_regex],
         max_length=11,
         verbose_name="phone",
         unique=True,
@@ -24,7 +32,12 @@ class User(AbstractUser):
         verbose_name="city",
         max_length=30,
     )
+    zip_code_regax = RegexValidator(
+        regex=r"^[0-9]{2}-[0-9]{3}",
+        message="Zip code must be entered in format: '12-345' Up to 5 digits allowed.",
+    )
     zip_code = models.TextField(
+        validators=[zip_code_regax],
         verbose_name="zip code",
         max_length=6,
     )
@@ -42,6 +55,10 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "user"
         verbose_name_plural = "users"
+        # ordering = ("first_name",)
+
+    def __str__(self):
+        return str(self.pk) + " | " + self.first_name + " " + self.last_name
 
 
 class Worker(User):
@@ -88,3 +105,16 @@ class Worker(User):
     class Meta:
         verbose_name = "worker"
         verbose_name_plural = "workers"
+
+    def __str__(self):
+        return (
+            str(self.pk)
+            + " | "
+            + self.first_name
+            + " "
+            + self.last_name
+            + " | "
+            + self.position
+            + " | "
+            + self.status
+        )
