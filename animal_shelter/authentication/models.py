@@ -2,10 +2,6 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
-# from django.utils.translation import gettext_lazy as _
-
-# Create your models here.
-
 
 class User(AbstractUser):
     email = models.EmailField(
@@ -55,10 +51,13 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "user"
         verbose_name_plural = "users"
-        # ordering = ("first_name",)
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
     def __str__(self):
-        return str(self.pk) + " | " + self.first_name + " " + self.last_name
+        return f"{self.pk} {self.full_name}"
 
 
 class Worker(User):
@@ -106,15 +105,9 @@ class Worker(User):
         verbose_name = "worker"
         verbose_name_plural = "workers"
 
+    @property
+    def full_name(self):
+        return super().full_name
+
     def __str__(self):
-        return (
-            str(self.pk)
-            + " | "
-            + self.first_name
-            + " "
-            + self.last_name
-            + " | "
-            + self.position
-            + " | "
-            + self.status
-        )
+        return f"{super().full_name} - {self.position}"
