@@ -1,5 +1,5 @@
-# from django.contrib.auth.models import AbstractUser
 from authentication.models import User, Worker
+from django.core.validators import RegexValidator
 from django.db import models
 
 # from django.utils.translation import gettext_lazy as _
@@ -18,6 +18,7 @@ class Section(models.TextChoices):
 
 
 class Cage(models.Model):
+    cage_number = models.IntegerField()
     section = models.CharField(
         max_length=3,
         verbose_name="section",
@@ -33,16 +34,12 @@ class Cage(models.Model):
         choices=Species.choices,
     )
 
+    @property
+    def cage_identyficator(self):
+        return f"{self.section}-{self.cage_number}"
+
     def __str__(self):
-        return (
-            str(self.pk)
-            + ":"
-            + str(self.species)
-            + " - "
-            + str(self.section)
-            + ":"
-            + str(self.space)
-        )
+        return self.cage_identyficator
 
 
 class Animal(models.Model):
@@ -51,7 +48,12 @@ class Animal(models.Model):
         verbose_name="species",
         choices=Species.choices,
     )
+    name_regex = RegexValidator(
+        regex=r"^[A-Z][a-z]+$",
+        message="Name must start with upper letter and can not have numbers",
+    )
     name = models.TextField(
+        validators=[name_regex],
         verbose_name="name",
         max_length=45,
     )
@@ -85,7 +87,7 @@ class Animal(models.Model):
         blank=True,
         default="Opis jeszcze nie zamieszczony",
     )
-    date_of_arrival = models.DateTimeField(
+    date_of_arrival = models.DateField(
         auto_now_add=True,
         verbose_name="date of arrival",
     )
@@ -95,7 +97,6 @@ class Animal(models.Model):
 
     class Status(models.TextChoices):
         ADDOPTED = "addopted"
-        RESERVED = "reserved"
         UNAVAILABLE = "unavailable"
         AVAILABLE = "available"
 
@@ -109,12 +110,35 @@ class Animal(models.Model):
     cage = models.ForeignKey(
         Cage,
         verbose_name="cage",
+        related_name="animals",
         null=True,
         on_delete=models.SET_NULL,
     )
 
+    @property
+    def reservations(self):
+        animal = Animal.objects.get(name=self.name)
+        return Reservation.objects.filter(animal=animal)
+
+    @property
+    def adoptions(self):
+        animal = Animal.objects.get(name=self.name)
+        return Adoption.objects.filter(animal=animal)
+
+    @property
+    def photos(self):
+        animal = Animal.objects.get(name=self.name)
+        return Photo.objects.filter(animal=animal)
+
+    def __str__(self):
+        return self.name
+
 
 class Photo(models.Model):
+    alter = models.TextField(
+        max_length=30,
+        verbose_name="alternativer description",
+    )
     photo = models.ImageField(
         upload_to="animal",
         verbose_name="photo",
@@ -127,9 +151,12 @@ class Photo(models.Model):
         null=True,
     )
 
+    def __str__(self):
+        return self.alter
+
 
 class MeetingInfo(models.Model):
-    create_date = models.DateTimeField(
+    create_date = models.DateField(
         verbose_name="create date",
         auto_now_add=True,
     )
@@ -148,25 +175,60 @@ class MeetingInfo(models.Model):
         Worker,
         null=True,
         related_name="%(class)s_worker",
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
     )
+
+    def __str__(self):
+        return f"{self.create_date} | {self.user} | {self.animal}"
 
 
 class Reservation(MeetingInfo):
-    reservation_date = models.DateTimeField(
+    reservation_date = models.DateField(
         verbose_name="reservation date",
     )
 
+    @property
+    def reservation_info(self):
+        return f"{self.animal.name}-{self.reservation_date}"
+
+    def __str__(self):
+        return f"{super().animal} | {self.reservation_date}"
+
 
 class Adoption(MeetingInfo):
-    adoption_date = models.DateTimeField(
+    adoption_date = models.DateField(
         verbose_name="adoption date",
+    )
+    ID_series_and_number_regex = RegexValidator(
+        regex=r"^[A-Z]{3} [0-9]{6}",
+        message=(
+            "Phone number must be entered in the format: '19012345678'. Up to 11 digits allowed."
+        ),
     )
     ID_series_and_number = models.TextField(
         max_length=9,
-        verbose_name="ID car series and number",
+        verbose_name="ID card series and number",
         unique=True,
     )
     agreement = models.BooleanField(
         verbose_name="agreement",
     )
+
+    class Status(models.TextChoices):
+        ACCEPTED = "accepted"
+        DECLINED = "declined"
+        READY_FOR_CONSIDERATION = "ready for consideration"
+
+    status = models.CharField(
+        max_length=30,
+        verbose_name="adoption status",
+        choices=Status.choices,
+        default=Status.READY_FOR_CONSIDERATION,
+    )
+
+    @property
+    def adoption_info(self):
+        return f"{self.animal.name}-{self.adoption_date}"
+
+    def __str__(self):
+        return f"{super().animal} | {self.adoption_date}"
