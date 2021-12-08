@@ -48,7 +48,12 @@ class Animal(models.Model):
         verbose_name="species",
         choices=Species.choices,
     )
+    name_regex = RegexValidator(
+        regex=r"^[A-Z][a-z]+$",
+        message="Name must start with upper letter and can not have numbers",
+    )
     name = models.TextField(
+        validators=[name_regex],
         verbose_name="name",
         max_length=45,
     )
