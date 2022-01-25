@@ -66,21 +66,6 @@ class Worker(User):
         verbose_name="employment date",
     )
 
-    class Position(models.TextChoices):
-        CLEANER = "cleaner"
-        ADMINISTRATOR = "administrator"
-        VOLUNTEER = "volunteer"
-
-    position = models.CharField(
-        max_length=20,
-        verbose_name="position",
-        choices=Position.choices,
-    )
-    contract_expiration_date = models.DateTimeField(
-        verbose_name="contract expiration date",
-        blank=True,
-        null=True,
-    )
     bank_account_number = models.TextField(
         max_length=26,
         verbose_name="bank account number",
@@ -88,17 +73,6 @@ class Worker(User):
     wage = models.IntegerField(
         verbose_name="wage",
         default=0,
-    )
-
-    class Status(models.TextChoices):
-        TRIAL = "trial"
-        EXPIRED = "expired"
-        EMPLOYED = "employed"
-
-    status = models.CharField(
-        max_length=15,
-        verbose_name="status",
-        choices=Status.choices,
     )
 
     class Meta:
@@ -110,4 +84,4 @@ class Worker(User):
         return super().full_name
 
     def __str__(self):
-        return f"{super().full_name} - {self.position}"
+        return f"{super().full_name}"

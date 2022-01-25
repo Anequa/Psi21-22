@@ -1,4 +1,4 @@
-from authentication.models import User, Worker
+from authentication.models import User
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -91,9 +91,6 @@ class Animal(models.Model):
         auto_now_add=True,
         verbose_name="date of arrival",
     )
-    estimate_year_of_birth = models.IntegerField(
-        verbose_name="estimate year of birth",
-    )
 
     class Status(models.TextChoices):
         ADDOPTED = "addopted"
@@ -171,12 +168,17 @@ class MeetingInfo(models.Model):
         related_name="%(class)s_user",
         on_delete=models.CASCADE,
     )
-    worker = models.ForeignKey(
-        Worker,
-        null=True,
-        related_name="%(class)s_worker",
-        on_delete=models.SET_NULL,
-    )
+    # worker = models.ForeignKey(
+    #     Worker,
+    #     null=True,
+    #     related_name="%(class)s_worker",
+    #     on_delete=models.SET_NULL,
+    # )
+
+    class Meta:
+        verbose_name = "meeting info"
+        verbose_name_plural = "meetings info"
+        abstract = True
 
     def __str__(self):
         return f"{self.create_date} | {self.user} | {self.animal}"
@@ -186,6 +188,10 @@ class Reservation(MeetingInfo):
     reservation_date = models.DateField(
         verbose_name="reservation date",
     )
+
+    class Meta:
+        verbose_name = "reservation"
+        verbose_name_plural = "reservations"
 
     @property
     def reservation_info(self):
@@ -225,6 +231,10 @@ class Adoption(MeetingInfo):
         choices=Status.choices,
         default=Status.READY_FOR_CONSIDERATION,
     )
+
+    class Meta:
+        verbose_name = "adoption"
+        verbose_name_plural = "adoptions"
 
     @property
     def adoption_info(self):
