@@ -7,4 +7,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("shelter/", include("shelter.urls")),
     path("api/", decorator_include(staff_member_required, "api.urls")),
+    path("api-auth/", include("rest_framework.urls")),
 ]
