@@ -9,15 +9,14 @@ from shelter.models import Cage
 from . import views
 
 
-class CageTests(APITestCase):
-    def _login(self, username, email, password):
-        Worker.objects.create_superuser(
-            username=username, email=email, password=password
-        )
-        client = APIClient()
-        client.login(username=username, password=password)
-        return client
+def _login(username, email, password):
+    Worker.objects.create_superuser(username=username, email=email, password=password)
+    client = APIClient()
+    client.login(username=username, password=password)
+    return client
 
+
+class CageTests(APITestCase):
     def post_cage(self, cage_nr, section, space, species, client):
         url = reverse(views.CageList.name)
         data = {
@@ -30,7 +29,7 @@ class CageTests(APITestCase):
         return response
 
     def test_post_and_get_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         new_cage_nr = 1
         new_cage_space = 3
         new_cage_section = "A"
@@ -38,7 +37,6 @@ class CageTests(APITestCase):
         response = self.post_cage(
             new_cage_nr, new_cage_section, new_cage_space, new_cage_species, client
         )
-        # print("PK {0}".format(Cage.objects.get().pk))
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Cage.objects.count(), 1)
@@ -48,7 +46,7 @@ class CageTests(APITestCase):
         assert Cage.objects.get().species == new_cage_species
 
     def test_post_existing_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         new_cage_nr = 1
         new_cage_space = 3
         new_cage_section = "A"
@@ -61,11 +59,10 @@ class CageTests(APITestCase):
         response_two = self.post_cage(
             new_cage_nr, new_cage_section, new_cage_space, new_cage_species, client
         )
-        # print(response_two)
         assert response_two.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_filter_cage_by_species(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -84,7 +81,6 @@ class CageTests(APITestCase):
         url = "{0}?{1}".format(
             reverse(views.CageList.name), urlencode(filter_by_species)
         )
-        # print(url)
         response = client.get(url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 1
@@ -94,7 +90,7 @@ class CageTests(APITestCase):
         assert response.data["results"][0]["section"] == cage_section
 
     def test_get_cage_collection(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -123,7 +119,7 @@ class CageTests(APITestCase):
         assert response.data["results"][1]["section"] == cage_section2
 
     def test_update_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -142,12 +138,12 @@ class CageTests(APITestCase):
             "species": update_cage_species,
         }
         patch_response = client.patch(url, data, format="json")
-        # print(patch_response.data)
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         assert patch_response.data["species"] == update_cage_species
 
     def test_update_existing_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         new_cage_nr = 1
         new_cage_space = 3
         new_cage_section = "A"
@@ -179,11 +175,10 @@ class CageTests(APITestCase):
             client,
         )
 
-        # print(update_response)
         assert update_response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_get_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -195,14 +190,14 @@ class CageTests(APITestCase):
 
         url = urls.reverse(views.CageDetail.name, None, {response.data["pk"]})
         get_response = client.patch(url, format="json")
-        # print(response.data)
+
         assert get_response.status_code == status.HTTP_200_OK
         assert response.data["cage_number"] == cage_nr
         assert response.data["species"] == cage_species
         assert response.data["space"] == cage_space
         assert response.data["section"] == cage_section
-        
-           def create_worker(
+
+    def create_worker(
         self,
         password,
         username,
