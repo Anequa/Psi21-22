@@ -9,15 +9,14 @@ from shelter.models import Cage
 from . import views
 
 
-class CageTests(APITestCase):
-    def _login(self, username, email, password):
-        Worker.objects.create_superuser(
-            username=username, email=email, password=password
-        )
-        client = APIClient()
-        client.login(username=username, password=password)
-        return client
+def _login(username, email, password):
+    Worker.objects.create_superuser(username=username, email=email, password=password)
+    client = APIClient()
+    client.login(username=username, password=password)
+    return client
 
+
+class CageTests(APITestCase):
     def post_cage(self, cage_nr, section, space, species, client):
         url = reverse(views.CageList.name)
         data = {
@@ -30,7 +29,7 @@ class CageTests(APITestCase):
         return response
 
     def test_post_and_get_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         new_cage_nr = 1
         new_cage_space = 3
         new_cage_section = "A"
@@ -48,7 +47,7 @@ class CageTests(APITestCase):
         assert Cage.objects.get().species == new_cage_species
 
     def test_post_existing_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         new_cage_nr = 1
         new_cage_space = 3
         new_cage_section = "A"
@@ -65,7 +64,7 @@ class CageTests(APITestCase):
         assert response_two.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_filter_cage_by_species(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -94,7 +93,7 @@ class CageTests(APITestCase):
         assert response.data["results"][0]["section"] == cage_section
 
     def test_get_cage_collection(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -123,7 +122,7 @@ class CageTests(APITestCase):
         assert response.data["results"][1]["section"] == cage_section2
 
     def test_update_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -147,7 +146,7 @@ class CageTests(APITestCase):
         assert patch_response.data["species"] == update_cage_species
 
     def test_update_existing_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         new_cage_nr = 1
         new_cage_space = 3
         new_cage_section = "A"
@@ -183,7 +182,7 @@ class CageTests(APITestCase):
         assert update_response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_get_cage(self):
-        client = self._login("admin", "admin@admin.com", "admin123")
+        client = _login("admin", "admin@admin.com", "admin123")
         cage_nr = 1
         cage_space = 3
         cage_section = "A"
@@ -201,8 +200,8 @@ class CageTests(APITestCase):
         assert response.data["species"] == cage_species
         assert response.data["space"] == cage_space
         assert response.data["section"] == cage_section
-        
-           def create_worker(
+
+    def create_worker(
         self,
         password,
         username,

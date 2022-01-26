@@ -37,7 +37,7 @@ class Cage(models.Model):
         return f"{self.section}-{self.cage_number}"
 
     def __str__(self):
-        return self.cage_identyficator
+        return f"{self.cage_identyficator} - {self.species}"
 
 
 class Animal(models.Model):
@@ -212,7 +212,6 @@ class Adoption(MeetingInfo):
     ID_series_and_number = models.TextField(
         max_length=9,
         verbose_name="ID card series and number",
-        unique=True,
     )
     agreement = models.BooleanField(
         verbose_name="agreement",

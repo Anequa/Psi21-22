@@ -23,6 +23,8 @@ class CustomSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_staff = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -159,6 +161,8 @@ class WorkerSerializer(UserSerializer):
 
 
 class WorkerSerializerWhenUpdate(UserSerializerWhenUpdate, WorkerSerializer):
+    is_staff = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = Worker
         fields = [
@@ -178,6 +182,7 @@ class WorkerSerializerWhenUpdate(UserSerializerWhenUpdate, WorkerSerializer):
             "bank_account_number",
             "wage",
             "is_superuser",
+            "is_staff",
         ]
 
 
@@ -202,6 +207,8 @@ class CageSerializer(serializers.HyperlinkedModelSerializer):
         """Check if cage number 'x' not exist in specified section.
         Check if there is free space in that cage"""
         section = self.initial_data["section"][0]
+        # print(self.instance)
+        # print(self.instance is None)
         if self.instance is None:
             cages = Cage.objects.filter(section=section, cage_number=value).exists()
         else:
@@ -260,7 +267,13 @@ class AnimalSerializer(CustomSerializer):
         # # initial_cage = Cage.objects.get(pk=id)
         initial_cage = Cage.objects.get(pk=value.id)
         # print("===================", value.pk, sep="\n")
-        how_many_cages = Animal.objects.filter(cage=initial_cage)
+        if self.instance is None:
+            how_many_cages = Animal.objects.filter(cage=initial_cage)
+        else:
+            how_many_cages = Animal.objects.filter(cage=initial_cage).filter(
+                ~Q(pk=self.instance.pk)
+            )
+        # how_many_cages = Animal.objects.filter(cage=initial_cage)
         if len(how_many_cages) >= initial_cage.space:
             raise serializers.ValidationError(
                 f"Cage number {initial_cage.cage_number} in sector {initial_cage.section} has no free space.",
@@ -284,12 +297,12 @@ class AnimalSerializer(CustomSerializer):
         return value
 
 
-class PhotoSerializer(serializers.ModelSerializer):
-    animal = serializers.SlugRelatedField(
-        queryset=Animal.objects.all(), slug_field="name"
-    )
+class PhotoSerializer(CustomSerializer):
     animal = serializers.HyperlinkedRelatedField(
-        many=False, read_only=True, view_name="animal-detail"
+        queryset=Animal.objects.all(),
+        many=False,
+        read_only=False,
+        view_name="animal-detail",
     )
 
     class Meta:
@@ -321,10 +334,13 @@ class ReservationSerializer(CustomSerializer):
         view_name="animal-detail",
     )
     user = serializers.HyperlinkedRelatedField(
-        queryset=User.objects.all(),
+        queryset=User.objects.filter(is_staff=False),
         many=False,
         read_only=False,
         view_name="user-detail",
+    )
+    owner = serializers.HyperlinkedRelatedField(
+        read_only=True, many=False, view_name="reservation-detail"
     )
 
     class Meta:
@@ -348,11 +364,21 @@ class ReservationSerializer(CustomSerializer):
             raise serializers.ValidationError(
                 "Can not set a meeting, animal is addopted or unavailable.",
             )
-        reservations = (
-            Reservation.objects.filter(reservation_date=value, animal=animal)
-            # .filter(~Q(pk=self.instance.pk))
-            .exists()
-        )
+        if self.instance is None:
+            reservations = Reservation.objects.filter(
+                reservation_date=value, animal=animal
+            ).exists()
+        else:
+            reservations = (
+                Reservation.objects.filter(reservation_date=value, animal=animal)
+                .filter(~Q(pk=self.instance.pk))
+                .exists()
+            )
+        # reservations = (
+        #     Reservation.objects.filter(reservation_date=value, animal=animal)
+        #     # .filter(~Q(pk=self.instance.pk))
+        #     .exists()
+        # )
         adoptions = Adoption.objects.filter(adoption_date=value, animal=animal).exists()
         if reservations or adoptions:
             raise serializers.ValidationError(
@@ -369,12 +395,14 @@ class AdoptionSerializer(CustomSerializer):
         view_name="animal-detail",
     )
     user = serializers.HyperlinkedRelatedField(
-        queryset=User.objects.all(),
+        queryset=User.objects.filter(is_staff=False),
         many=False,
         read_only=False,
         view_name="user-detail",
     )
-
+    owner = serializers.HyperlinkedRelatedField(
+        read_only=True, many=False, view_name="reservation-detail"
+    )
     # agreement = serializers.BooleanField(read_only=True)
     # ID_series_and_number = serializers.CharField(max_length=9, read_only=True)
 
@@ -406,11 +434,21 @@ class AdoptionSerializer(CustomSerializer):
         reservations = Reservation.objects.filter(
             reservation_date=value, animal=animal
         ).exists()
-        adoptions = (
-            Adoption.objects.filter(adoption_date=value, animal=animal)
-            # .filter(~Q(pk=self.instance.pk))
-            .exists()
-        )
+        if self.instance is None:
+            adoptions = Adoption.objects.filter(
+                adoption_date=value, animal=animal
+            ).exists()
+        else:
+            adoptions = (
+                Adoption.objects.filter(adoption_date=value, animal=animal)
+                .filter(~Q(pk=self.instance.pk))
+                .exists()
+            )
+        # adoptions = (
+        #     Adoption.objects.filter(adoption_date=value, animal=animal)
+        #     # .filter(~Q(pk=self.instance.pk))
+        #     .exists()
+        # )
         if reservations or adoptions:
             raise serializers.ValidationError(
                 "Animal has meeting in that date.",
