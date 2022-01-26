@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from shelter.models import Adoption, Animal, Cage, Photo, Reservation
 
+from .custom_permissions import IsAdminUser
 from .serializers import (
     AdoptionSerializer,
     AnimalSerializer,
@@ -22,28 +23,17 @@ class RootApi(generics.GenericAPIView):
     name = "root-api"
 
     def get(self, request, *args, **kwargs):
-        if request.user.is_superuser:
-            return Response(
-                {
-                    "user": reverse(UserList.name, request=request),
-                    "worker": reverse(WorkerList.name, request=request),
-                    "adoption": reverse(AdoptionList.name, request=request),
-                    "reservation": reverse(ReservationList.name, request=request),
-                    "photo": reverse(PhotoList.name, request=request),
-                    "cage": reverse(CageList.name, request=request),
-                    "animal": reverse(AnimalList.name, request=request),
-                }
-            )
-        else:
-            return Response(
-                {
-                    "adoption": reverse(AdoptionList.name, request=request),
-                    "reservation": reverse(ReservationList.name, request=request),
-                    "photo": reverse(PhotoList.name, request=request),
-                    "cage": reverse(CageList.name, request=request),
-                    "animal": reverse(AnimalList.name, request=request),
-                }
-            )
+        return Response(
+            {
+                "user": reverse(UserList.name, request=request),
+                "worker": reverse(WorkerList.name, request=request),
+                "adoption": reverse(AdoptionList.name, request=request),
+                "reservation": reverse(ReservationList.name, request=request),
+                "photo": reverse(PhotoList.name, request=request),
+                "cage": reverse(CageList.name, request=request),
+                "animal": reverse(AnimalList.name, request=request),
+            }
+        )
 
 
 # user
@@ -51,6 +41,7 @@ class UserList(generics.ListCreateAPIView):
     queryset = User.objects.filter(is_staff=False)
     serializer_class = UserSerializer
     name = "user-list"
+    permission_classes = [IsAdminUser]
     ordering_fields = [
         "pk",
         "first_name",
@@ -67,15 +58,17 @@ class UserList(generics.ListCreateAPIView):
 
 
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.filter(is_staff=False)
     serializer_class = UserSerializerWhenUpdate
     name = "user-detail"
+    permission_classes = [IsAdminUser]
+    queryset = User.objects.filter(is_staff=False)
 
 
 class WorkerList(generics.ListCreateAPIView):
     queryset = Worker.objects.all()
     serializer_class = WorkerSerializer
     name = "worker-list"
+    permission_classes = [IsAdminUser]
     ordering_fields = [
         "pk",
         "first_name",
@@ -91,6 +84,7 @@ class WorkerDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Worker.objects.all()
     serializer_class = WorkerSerializerWhenUpdate
     name = "worker-detail"
+    permission_classes = [IsAdminUser]
 
 
 # Adoption
