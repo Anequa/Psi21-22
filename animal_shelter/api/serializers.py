@@ -202,11 +202,15 @@ class CageSerializer(serializers.HyperlinkedModelSerializer):
         """Check if cage number 'x' not exist in specified section.
         Check if there is free space in that cage"""
         section = self.initial_data["section"][0]
-        if (
-            Cage.objects.filter(section=section, cage_number=value)
-            .filter(~Q(pk=self.instance.pk))
-            .exists()
-        ):
+        if self.instance is None:
+            cages = Cage.objects.filter(section=section, cage_number=value).exists()
+        else:
+            cages = (
+                Cage.objects.filter(section=section, cage_number=value)
+                .filter(~Q(pk=self.instance.pk))
+                .exists()
+            )
+        if cages:
             raise serializers.ValidationError(
                 f"Cage number {value} already exist in sector {self.initial_data['section'][0]}.",
             )
