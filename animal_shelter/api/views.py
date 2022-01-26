@@ -1,8 +1,5 @@
 from authentication.models import User, Worker
-from django.db import models
-from django.db.models import fields
 from django_filters import DateFilter, FilterSet, NumberFilter
-from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -25,17 +22,28 @@ class RootApi(generics.GenericAPIView):
     name = "root-api"
 
     def get(self, request, *args, **kwargs):
-        return Response(
-            {
-                "user": reverse(UserList.name, request=request),
-                "worker": reverse(WorkerList.name, request=request),
-                "adoption": reverse(AdoptionList.name, request=request),
-                "reservation": reverse(ReservationList.name, request=request),
-                "photo": reverse(PhotoList.name, request=request),
-                "cage": reverse(CageList.name, request=request),
-                "animal": reverse(AnimalList.name, request=request),
-            }
-        )
+        if request.user.is_superuser:
+            return Response(
+                {
+                    "user": reverse(UserList.name, request=request),
+                    "worker": reverse(WorkerList.name, request=request),
+                    "adoption": reverse(AdoptionList.name, request=request),
+                    "reservation": reverse(ReservationList.name, request=request),
+                    "photo": reverse(PhotoList.name, request=request),
+                    "cage": reverse(CageList.name, request=request),
+                    "animal": reverse(AnimalList.name, request=request),
+                }
+            )
+        else:
+            return Response(
+                {
+                    "adoption": reverse(AdoptionList.name, request=request),
+                    "reservation": reverse(ReservationList.name, request=request),
+                    "photo": reverse(PhotoList.name, request=request),
+                    "cage": reverse(CageList.name, request=request),
+                    "animal": reverse(AnimalList.name, request=request),
+                }
+            )
 
 
 # user
@@ -64,21 +72,10 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     name = "user-detail"
 
 
-# worker
-class WorkerFilter(FilterSet):
-    from_date = DateFilter(field_name="contract_expiration_date", lookup_expr="gte")
-    to_date = DateFilter(field_name="contract_expiration_date", lookup_expr="lte")
-
-    class Meta:
-        model = Worker
-        fields = ["position", "status", "from_date", "to_date"]
-
-
 class WorkerList(generics.ListCreateAPIView):
     queryset = Worker.objects.all()
     serializer_class = WorkerSerializer
     name = "worker-list"
-    filter_class = WorkerFilter
     ordering_fields = [
         "pk",
         "first_name",
@@ -86,9 +83,8 @@ class WorkerList(generics.ListCreateAPIView):
         "email",
         "phone",
         "wage",
-        "contract_expiration_date",
     ]
-    search_fields = ["first_name", "last_name", "position", "email", "phone"]
+    search_fields = ["first_name", "last_name", "email", "phone"]
 
 
 class WorkerDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -110,7 +106,6 @@ class AdoptionFilter(FilterSet):
             "agreement",
             "status",
             "user",
-            "worker",
             "animal",
             "from_create_date",
             "to_create_date",
@@ -119,12 +114,15 @@ class AdoptionFilter(FilterSet):
         ]
 
 
-class AdoptionList(generics.ListAPIView):
+class AdoptionList(generics.ListCreateAPIView):
     queryset = Adoption.objects.all()
     serializer_class = AdoptionSerializer
     name = "adoption-list"
     filter_class = AdoptionFilter
     ordering_fields = ["pk", "adoption_date", "create_date"]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class AdoptionDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -144,7 +142,6 @@ class ReservationFilter(FilterSet):
         model = Reservation
         fields = [
             "user",
-            "worker",
             "animal",
             "from_create_date",
             "to_create_date",
@@ -153,12 +150,15 @@ class ReservationFilter(FilterSet):
         ]
 
 
-class ReservationList(generics.ListAPIView):
+class ReservationList(generics.ListCreateAPIView):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     name = "reservation-list"
     filter_class = ReservationFilter
     ordering_fields = ["pk", "reservation_date"]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class ReservationDetail(generics.RetrieveUpdateDestroyAPIView):
