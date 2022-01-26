@@ -2,8 +2,6 @@ from authentication.models import User
 from django.core.validators import RegexValidator
 from django.db import models
 
-# from django.utils.translation import gettext_lazy as _
-
 
 class Species(models.TextChoices):
     DOG = "Dog"
@@ -109,7 +107,7 @@ class Animal(models.Model):
         verbose_name="cage",
         related_name="animals",
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
     )
 
     @property
@@ -168,12 +166,6 @@ class MeetingInfo(models.Model):
         related_name="%(class)s_user",
         on_delete=models.CASCADE,
     )
-    # worker = models.ForeignKey(
-    #     Worker,
-    #     null=True,
-    #     related_name="%(class)s_worker",
-    #     on_delete=models.SET_NULL,
-    # )
 
     class Meta:
         verbose_name = "meeting info"
@@ -187,6 +179,12 @@ class MeetingInfo(models.Model):
 class Reservation(MeetingInfo):
     reservation_date = models.DateField(
         verbose_name="reservation date",
+    )
+
+    owner = models.ForeignKey(
+        "authentication.User",
+        related_name="reservation",
+        on_delete=models.CASCADE,
     )
 
     class Meta:
@@ -230,6 +228,12 @@ class Adoption(MeetingInfo):
         verbose_name="adoption status",
         choices=Status.choices,
         default=Status.READY_FOR_CONSIDERATION,
+    )
+
+    owner = models.ForeignKey(
+        "authentication.User",
+        related_name="adoptions",
+        on_delete=models.CASCADE,
     )
 
     class Meta:

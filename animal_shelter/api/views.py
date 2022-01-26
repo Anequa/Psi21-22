@@ -121,6 +121,9 @@ class AdoptionList(generics.ListCreateAPIView):
     filter_class = AdoptionFilter
     ordering_fields = ["pk", "adoption_date", "create_date"]
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 class AdoptionDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Adoption.objects.all()
@@ -153,6 +156,9 @@ class ReservationList(generics.ListCreateAPIView):
     name = "reservation-list"
     filter_class = ReservationFilter
     ordering_fields = ["pk", "reservation_date"]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class ReservationDetail(generics.RetrieveUpdateDestroyAPIView):

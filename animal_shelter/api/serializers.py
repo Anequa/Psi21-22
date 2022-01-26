@@ -1,8 +1,8 @@
 from datetime import date as dt
 
 from authentication.models import User, Worker
-
-# from django.db.models import Q
+from django.contrib.auth.hashers import make_password
+from django.db.models import Q
 from profanity_check import predict
 from rest_framework import serializers
 from shelter.models import Adoption, Animal, Cage, Photo, Reservation
@@ -76,6 +76,23 @@ class UserSerializer(serializers.ModelSerializer):
                 "City can not contain any digits.",
             )
         return value
+
+    def validate_password(self, value):
+        """Check if password has at least one uppercased letter and at least one digit."""
+        is_upper = False
+        for i in value:
+            if i == i.capitalize():
+                is_upper = True
+                break
+        if not is_upper:
+            raise serializers.ValidationError(
+                "Password should have at least one uppercased letter.",
+            )
+        if value.isalpha():
+            raise serializers.ValidationError(
+                "Password should have at least one digit.",
+            )
+        return make_password(value)
 
 
 class UserSerializerWhenUpdate(UserSerializer):
@@ -185,7 +202,11 @@ class CageSerializer(serializers.HyperlinkedModelSerializer):
         """Check if cage number 'x' not exist in specified section.
         Check if there is free space in that cage"""
         section = self.initial_data["section"][0]
-        if Cage.objects.filter(section=section, cage_number=value).exists():
+        if (
+            Cage.objects.filter(section=section, cage_number=value)
+            .filter(~Q(pk=self.instance.pk))
+            .exists()
+        ):
             raise serializers.ValidationError(
                 f"Cage number {value} already exist in sector {self.initial_data['section'][0]}.",
             )
