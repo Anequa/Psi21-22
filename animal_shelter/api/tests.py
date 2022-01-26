@@ -37,7 +37,6 @@ class CageTests(APITestCase):
         response = self.post_cage(
             new_cage_nr, new_cage_section, new_cage_space, new_cage_species, client
         )
-        # print("PK {0}".format(Cage.objects.get().pk))
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Cage.objects.count(), 1)
@@ -60,7 +59,6 @@ class CageTests(APITestCase):
         response_two = self.post_cage(
             new_cage_nr, new_cage_section, new_cage_space, new_cage_species, client
         )
-        # print(response_two)
         assert response_two.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_filter_cage_by_species(self):
@@ -83,7 +81,6 @@ class CageTests(APITestCase):
         url = "{0}?{1}".format(
             reverse(views.CageList.name), urlencode(filter_by_species)
         )
-        # print(url)
         response = client.get(url, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 1
@@ -141,7 +138,7 @@ class CageTests(APITestCase):
             "species": update_cage_species,
         }
         patch_response = client.patch(url, data, format="json")
-        # print(patch_response.data)
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         assert patch_response.data["species"] == update_cage_species
 
@@ -178,7 +175,6 @@ class CageTests(APITestCase):
             client,
         )
 
-        # print(update_response)
         assert update_response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_get_cage(self):
@@ -194,7 +190,7 @@ class CageTests(APITestCase):
 
         url = urls.reverse(views.CageDetail.name, None, {response.data["pk"]})
         get_response = client.patch(url, format="json")
-        # print(response.data)
+
         assert get_response.status_code == status.HTTP_200_OK
         assert response.data["cage_number"] == cage_nr
         assert response.data["species"] == cage_species

@@ -207,8 +207,7 @@ class CageSerializer(serializers.HyperlinkedModelSerializer):
         """Check if cage number 'x' not exist in specified section.
         Check if there is free space in that cage"""
         section = self.initial_data["section"][0]
-        # print(self.instance)
-        # print(self.instance is None)
+
         if self.instance is None:
             cages = Cage.objects.filter(section=section, cage_number=value).exists()
         else:
@@ -261,19 +260,15 @@ class AnimalSerializer(CustomSerializer):
         return value
 
     def validate_cage(self, value):
-        # link = self.initial_data["cage"]
-        # # print("===================", link, sep="\n")
-        # id = link[len(link) - 2 : len(link) - 1]
-        # # initial_cage = Cage.objects.get(pk=id)
         initial_cage = Cage.objects.get(pk=value.id)
-        # print("===================", value.pk, sep="\n")
+
         if self.instance is None:
             how_many_cages = Animal.objects.filter(cage=initial_cage)
         else:
             how_many_cages = Animal.objects.filter(cage=initial_cage).filter(
                 ~Q(pk=self.instance.pk)
             )
-        # how_many_cages = Animal.objects.filter(cage=initial_cage)
+
         if len(how_many_cages) >= initial_cage.space:
             raise serializers.ValidationError(
                 f"Cage number {initial_cage.cage_number} in sector {initial_cage.section} has no free space.",
@@ -290,7 +285,6 @@ class AnimalSerializer(CustomSerializer):
                 animal__name=self.instance.name,
                 status=Adoption.Status.READY_FOR_CONSIDERATION,
             )
-            # print(adoptions)
             for adopt in adoptions:
                 adopt.status = Adoption.Status.DECLINED
                 adopt.save()
@@ -317,13 +311,6 @@ class PhotoSerializer(CustomSerializer):
                 "Alter already exist.",
             )
         return value
-
-
-# class MeetingInfoSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = MeetingInfo
-#         fields = "__all__"
-#         extra_fields = ["pk", "url"]
 
 
 class ReservationSerializer(CustomSerializer):
@@ -374,11 +361,6 @@ class ReservationSerializer(CustomSerializer):
                 .filter(~Q(pk=self.instance.pk))
                 .exists()
             )
-        # reservations = (
-        #     Reservation.objects.filter(reservation_date=value, animal=animal)
-        #     # .filter(~Q(pk=self.instance.pk))
-        #     .exists()
-        # )
         adoptions = Adoption.objects.filter(adoption_date=value, animal=animal).exists()
         if reservations or adoptions:
             raise serializers.ValidationError(
@@ -403,8 +385,6 @@ class AdoptionSerializer(CustomSerializer):
     owner = serializers.HyperlinkedRelatedField(
         read_only=True, many=False, view_name="reservation-detail"
     )
-    # agreement = serializers.BooleanField(read_only=True)
-    # ID_series_and_number = serializers.CharField(max_length=9, read_only=True)
 
     class Meta:
         model = Adoption
@@ -444,11 +424,7 @@ class AdoptionSerializer(CustomSerializer):
                 .filter(~Q(pk=self.instance.pk))
                 .exists()
             )
-        # adoptions = (
-        #     Adoption.objects.filter(adoption_date=value, animal=animal)
-        #     # .filter(~Q(pk=self.instance.pk))
-        #     .exists()
-        # )
+
         if reservations or adoptions:
             raise serializers.ValidationError(
                 "Animal has meeting in that date.",
