@@ -201,3 +201,87 @@ class CageTests(APITestCase):
         assert response.data["species"] == cage_species
         assert response.data["space"] == cage_space
         assert response.data["section"] == cage_section
+        
+           def create_worker(
+        self,
+        password,
+        username,
+        email,
+        first_name,
+        last_name,
+        phone,
+        city,
+        zip_code,
+        address_line1,
+        address_line2,
+        bank_account_number,
+        wage,
+        is_superuser,
+        is_staff,
+        client,
+    ):
+        url = reverse(views.WorkerList.name)
+        data = {
+            "password": password,
+            "username": username,
+            "email": email,
+            "first_name": first_name,
+            "phone": phone,
+            "last_name": last_name,
+            "city": city,
+            "zip_code": zip_code,
+            "address_line1": address_line1,
+            "address_line2": address_line2,
+            "bank_account_number": bank_account_number,
+            "wage": wage,
+            "bank_account_number": bank_account_number,
+            "wage": wage,
+            "is_superuser": is_superuser,
+            "is_staff": is_staff,
+        }
+        response = client.post(url, data, format="json")
+        return response
+
+    def test(self):
+        client = _login("admin", "admin@admin.com", "admin123")
+        password = "worker24"
+        username = "worker1"
+        email = "worker1@us.com"
+        first_name = "Adam"
+        last_name = "Pola"
+        phone = "500050122"
+        city = "Olsztyn"
+        zip_code = "12-123"
+        address_line1 = "Polna 23"
+        address_line2 = ""
+        bank_account_number = 12121212123434343434567890
+        wage = 2000
+        is_superuser = False
+        is_staff = True
+
+        response = self.create_worker(
+            password,
+            username,
+            email,
+            first_name,
+            last_name,
+            phone,
+            city,
+            zip_code,
+            address_line1,
+            address_line2,
+            bank_account_number,
+            wage,
+            is_superuser,
+            is_staff,
+            client,
+        )
+        worker = APIClient()
+        isLogged = worker.login(username="worker1", password="worker24")
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Worker.objects.filter(is_superuser=False).count() == 1
+        assert Worker.objects.filter(is_superuser=True).count() == 1
+        assert Worker.objects.filter(is_superuser=False).get().first_name == "Adam"
+        assert Worker.objects.filter(is_superuser=False).get().last_name == "Pola"
+        assert isLogged
