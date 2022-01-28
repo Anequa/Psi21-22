@@ -197,6 +197,7 @@ class CageTests(APITestCase):
         assert response.data["space"] == cage_space
         assert response.data["section"] == cage_section
 
+class WorkerTest(APITestCase):
     def create_worker(
         self,
         password,
@@ -237,7 +238,7 @@ class CageTests(APITestCase):
         response = client.post(url, data, format="json")
         return response
 
-    def test(self):
+    def test_post_and_get_worker(self):
         client = _login("admin", "admin@admin.com", "admin123")
         password = "worker24"
         username = "worker1"
